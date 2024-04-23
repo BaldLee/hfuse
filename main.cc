@@ -4,8 +4,10 @@
 
 #include "include/batch_norm_collect_statistics_cpu.h"
 #include "include/batch_norm_collect_statistics_gpu.cuh"
+#include "include/histogram1d_cpu.h"
+#include "include/histogram1d_gpu.cuh"
 
-int main() {
+void do_batch_norm_collect_statistics() {
     // Initialize random seed
     srand(time(NULL));
 
@@ -62,6 +64,47 @@ int main() {
     free(h_input);
     free(h_mean);
     free(h_transformed_var);
+}
 
+void do_histogram1d() {
+    srand(time(NULL));  // Seed for random number generation
+    int nbins = 256;
+    float minvalue = 0.0f;
+    float maxvalue = 100.0f;
+    int totalElements = 1024 * 1024;  // 1M elements
+    size_t size = totalElements * sizeof(float);
+
+    float* h_a = (float*)malloc(nbins * sizeof(float));
+    float* h_b = (float*)malloc(totalElements * sizeof(float));
+
+    // Initialize input data
+    for (int i = 0; i < totalElements; ++i) {
+        h_b[i] = static_cast<float>(rand()) /
+                 (static_cast<float>(RAND_MAX / maxvalue));
+    }
+
+    // Test for cpu
+    histogram1D_cpu(h_a, h_b, nbins, minvalue, maxvalue, totalElements);
+    printf("CPU results:\n");
+    for (int i = 0; i < nbins; i++) {
+        printf("a[%d]: %f\n", i, h_a[i]);
+    }
+
+    // Test for gpu
+    histogram1D_gpu(h_a, h_b, nbins, minvalue, maxvalue, totalElements);
+    printf("GPU results:\n");
+    for (int i = 0; i < nbins; i++) {
+        printf("a[%d]: %f\n", i, h_a[i]);
+    }
+
+    free(h_a);
+    free(h_b);
+}
+
+int main() {
+    printf("batch_norm_collect_statistics\n");
+    do_batch_norm_collect_statistics();
+    printf("histogram1d\n");
+    do_histogram1d();
     return 0;
 }

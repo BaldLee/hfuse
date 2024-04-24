@@ -2,8 +2,17 @@
 
 #include "../include/histogram1d_gpu.cuh"
 
-/*
-  Modified kernel for computing the histogram of the input using shared memory.
+/* This kernel comes from pytorch/aten/src/ATen/native/cuda/SummaryOps.cu
+ * (pytorch/pytorch commit d59f1da6)
+ *
+ * The PART A,B,C is devided according to the paper: Automatic Horizontal Fusion
+ * for GPU Kernels (https://dblp.org/rec/conf/cgo/LiZPL22)
+ *
+ * We assume the "getop" is "getDummyOp", which always returns 1. In origin
+ * code, "getop" is used to get the weight from weight tensor c. The tensor info
+ * of c is passed by the anonymous function "getWeightsOp". Refer to
+ * CUDA_tensor_histogram in pytorch/aten/src/ATen/native/cuda/SummaryOps.cu for
+ * details.
  */
 __global__ void histogram1D_kernel(float* a,       /* output */
                                    const float* b, /* input */
@@ -12,26 +21,25 @@ __global__ void histogram1D_kernel(float* a,       /* output */
     extern __shared__ float smem[];
     int i = threadIdx.x + blockIdx.x * blockDim.x;
 
-    // Initialize shared memory
+    // PARTA:Initialize shared memory counters
     for (int idx = threadIdx.x; idx < nbins; idx += blockDim.x) {
         smem[idx] = 0;
     }
     __syncthreads();
 
-    // Populate the shared memory histogram
+    // PART B: Go over the input b to increment shared counters
     while (i < totalElements) {
         float bVal = b[i];
         if (bVal >= minvalue && bVal <= maxvalue) {
             int bin = static_cast<int>((bVal - minvalue) /
                                        (maxvalue - minvalue) * nbins);
-            atomicAdd(&smem[bin],
-                      1);  // Simple increment since we are just counting
+            atomicAdd(&smem[bin], 1);
         }
         i += blockDim.x * gridDim.x;
     }
     __syncthreads();
 
-    // Copy from shared memory to global memory
+    // PART C: Increment the output a with the shared counters
     for (int idx = threadIdx.x; idx < nbins; idx += blockDim.x) {
         atomicAdd(&a[idx], smem[idx]);
     }

@@ -2,6 +2,7 @@
 bin/
 build/
 main
+mytest.py
 
 # Prerequisites
 *.d

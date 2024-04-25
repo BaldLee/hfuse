@@ -19,7 +19,6 @@ __global__ void histogram1D_kernel(float* a,       /* output */
                                    int nbins, float minvalue, float maxvalue,
                                    int totalElements) {
     extern __shared__ float smem[];
-    int i = threadIdx.x + blockIdx.x * blockDim.x;
 
     // PARTA:Initialize shared memory counters
     for (int idx = threadIdx.x; idx < nbins; idx += blockDim.x) {
@@ -28,11 +27,15 @@ __global__ void histogram1D_kernel(float* a,       /* output */
     __syncthreads();
 
     // PART B: Go over the input b to increment shared counters
+    int i = threadIdx.x + blockIdx.x * blockDim.x;
     while (i < totalElements) {
         float bVal = b[i];
         if (bVal >= minvalue && bVal <= maxvalue) {
             int bin = static_cast<int>((bVal - minvalue) /
                                        (maxvalue - minvalue) * nbins);
+            if (bin == nbins) {
+                bin -= 1;
+            }
             atomicAdd(&smem[bin], 1);
         }
         i += blockDim.x * gridDim.x;
@@ -61,12 +64,15 @@ void histogram1D_gpu(float* h_a,       /* output */
     cudaMemset(d_a, 0, nbins * sizeof(float));
 
     // Configure kernel
-    int threadsPerBlock = 256;
-    int blocksPerGrid = (totalElements + threadsPerBlock - 1) / threadsPerBlock;
+    int threadsPerBlock = 128;
+    int blocksPerGrid = 128;
 
     histogram1D_kernel<<<blocksPerGrid, threadsPerBlock,
                          nbins * sizeof(float)>>>(d_a, d_b, nbins, minvalue,
                                                   maxvalue, totalElements);
 
     cudaMemcpy(h_a, d_a, nbins * sizeof(float), cudaMemcpyDeviceToHost);
+
+    cudaFree(d_a);
+    cudaFree(d_b);
 }

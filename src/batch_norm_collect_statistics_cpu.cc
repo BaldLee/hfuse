@@ -18,7 +18,8 @@ void batch_norm_collect_statistics_cpu(const float* input, int height,
         }
 
         float mean = sum / N;
-        float variance = (sum_sq / N) - (mean * mean);
+        float variance =
+            (sum_sq / N) - (mean * mean);  // Var(X) = E(X^2) - E(X)^2
         save_mean[plane] = mean;
         save_transformed_var[plane] = variance + epsilon;
     }

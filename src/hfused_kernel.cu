@@ -1,4 +1,5 @@
 #include <cuda_runtime.h>
+#include <stdio.h>
 
 #include "../include/from_pytorch.cuh"
 #include "../include/hfused_kernel.cuh"
@@ -99,6 +100,7 @@ __global__ void hfused_kernel_kernel7_1(
     // __shared__ float shared_avg_var[2 * WARP_SIZE];
     int* shared_n = (int*)smem;
     float* shared_avg_var = (float*)&shared_n[2 * 2 * WARP_SIZE + WARP_SIZE];
+    float* k2smem = (float*)&shared_avg_var[2 * WARP_SIZE];
     int plane = blockIdx.x;
     int N = height * depth;
     int tid = threadIdx_x + threadIdx_y * blockDim_x;
@@ -179,15 +181,15 @@ __global__ void hfused_kernel_kernel7_1(
 K1_end:
     if (global_tid < 896) goto K2_end;
     // PARTA:Initialize shared memory counters
-    for (int idx = threadIdx.x; idx < nbins; idx += blockDim.x) {
-        smem[idx] = 0;
+    for (int idx = threadIdx_x; idx < nbins; idx += blockDim_x) {
+        k2smem[idx] = 0;
     }
 
-    asm("bar.sync 2, 128");
+    asm("bar.sync 2, 128;");
 
     // PART B: Go over the input b to increment shared counters
-    for (int i = threadIdx.x + blockIdx.x * blockDim.x; i < totalElements;
-         i += blockDim.x * gridDim.x) {
+    for (int i = threadIdx_x + blockIdx.x * blockDim_x; i < totalElements;
+         i += blockDim_x * gridDim.x) {
         float bVal = k2_input[i];
         if (bVal >= minvalue && bVal <= maxvalue) {
             int bin = static_cast<int>((bVal - minvalue) /
@@ -195,15 +197,15 @@ K1_end:
             if (bin == nbins) {
                 bin -= 1;
             }
-            atomicAdd(&smem[bin], 1);
+            atomicAdd(&k2smem[bin], 1);
         }
     }
 
-    asm("bar.sync 2, 128");
+    asm("bar.sync 2, 128;");
 
     // PART C: Increment the output a with the shared counters
-    for (int idx = threadIdx.x; idx < nbins; idx += blockDim.x) {
-        atomicAdd(&k2_output[idx], smem[idx]);
+    for (int idx = threadIdx_x; idx < nbins; idx += blockDim_x) {
+        atomicAdd(&k2_output[idx], k2smem[idx]);
     }
 K2_end:
     return;
@@ -237,9 +239,8 @@ void hfused(const float* k1_input, int height, int width, int depth,
 
     /* Two kernel use different size of shared memory
      * We allocate one dynamic shared memory and they will share it. */
-    size_t shmem_size = max((2 * 2 * WARP_SIZE + WARP_SIZE) * sizeof(int) +
-                                (2 * WARP_SIZE) * sizeof(float),
-                            nbins * sizeof(float));
+    size_t shmem_size = (2 * 2 * WARP_SIZE + WARP_SIZE) * sizeof(int) +
+                        (2 * WARP_SIZE) * sizeof(float) + nbins * sizeof(float);
 
     int gridDim = 128;
     int blockDim = 1024;

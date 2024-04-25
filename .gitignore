@@ -3,6 +3,7 @@ bin/
 build/
 main
 mytest.py
+*.log
 
 # Prerequisites
 *.d

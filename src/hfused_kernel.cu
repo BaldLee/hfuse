@@ -179,7 +179,7 @@ __global__ void hfused_kernel_kernel7_1(
     }
 
 K1_end:
-    if (global_tid < 896) goto K2_end;
+    if (global_tid < 896) goto K2_end;  // TODO: results are all zero, fix it
     // PARTA:Initialize shared memory counters
     for (int idx = threadIdx_x; idx < nbins; idx += blockDim_x) {
         k2smem[idx] = 0;
@@ -234,7 +234,7 @@ void hfused(const float* k1_input, int height, int width, int depth,
     // Copy data from host to device
     cudaMemcpy(d_k1_input, k1_input, total_elements * sizeof(float),
                cudaMemcpyHostToDevice);
-    cudaMemcpy(d_k2_input, d_k2_input, k2_size, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_k2_input, k2_input, k2_size, cudaMemcpyHostToDevice);
     cudaMemset(d_k2_output, 0, nbins * sizeof(float));
 
     /* Two kernel use different size of shared memory

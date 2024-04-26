@@ -5,6 +5,7 @@ main
 mytest.py
 *.log
 out.json
+*.png
 
 # Prerequisites
 *.d

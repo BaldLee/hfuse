@@ -196,8 +196,8 @@ void benchmark() {
     fprintf(jfile, "[");
     bool jsoncomma = false;
     // Do benchmark
-    const int loop = 10000;
-    for (int height = 64; height <= 4096; height *= 2) {
+    const int loop = 5000;
+    for (int height = 64; height <= 8192; height *= 2) {
         const int k1_total_elements = height * width * depth;
         float* h_input = (float*)malloc(k1_total_elements * sizeof(float));
         // Init random content
@@ -205,7 +205,7 @@ void benchmark() {
             h_input[i] = (float)rand() / (float)RAND_MAX;
         }
         for (unsigned int k2_totalElements = 1 << 20;
-             k2_totalElements <= 8 * 1 << 20; k2_totalElements *= 2) {
+             k2_totalElements <= 32 * 1 << 20; k2_totalElements *= 2) {
             float* h_b = (float*)malloc(k2_totalElements * sizeof(float));
             // Init random content
             for (int i = 0; i < k2_totalElements; ++i) {

@@ -108,11 +108,13 @@ void batch_norm_collect_statistics_gpu(const float* h_input, int height,
 
     // Kernel dimensions
     dim3 blocks(width);    // One block per channel
-    dim3 threads(16, 16);  // 256 threads per block
+    dim3 threads(16, 64);  // 1024 threads per block
 
     // Launch the kernel
     batch_norm_collect_statistics_kernel<<<blocks, threads>>>(
         d_input, height, width, depth, epsilon, d_mean, d_transformed_var);
+
+    printf("%s\n", cudaGetErrorString(cudaGetLastError()));
 
     // Copy results back to host
     cudaMemcpy(h_mean, d_mean, width * sizeof(float), cudaMemcpyDeviceToHost);
@@ -141,7 +143,7 @@ float benchmark_batch_norm_collect_statistics_gpu(
 
     // Kernel dimensions
     dim3 blocks(width);    // One block per channel
-    dim3 threads(16, 16);  // 256 threads per block
+    dim3 threads(16, 64);  // 1024 threads per block
 
     // Warm up
     for (int i = 0; i < 5; i++) {

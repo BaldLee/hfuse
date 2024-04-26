@@ -25,7 +25,7 @@ def main():
     with open(json_path, "r") as jfin:
         jobj = json.load(jfin)
     seqLens = [1 << 20, 1 << 21, 1 << 22, 1 << 23, 1 << 24, 1 << 25]
-    heights = [64, 128, 256, 512, 1024, 2048, 4096, 8192]
+    heights = [256, 512, 1024, 2048, 4096, 8192, 16384]
     y1 = {}
     y2 = {}
     for i in seqLens:
@@ -33,18 +33,17 @@ def main():
         y2[seqLenIndex(i)] = []
 
     for i in jobj:
-        # (int(math.log2(i["height"])) - 6) is the index in heights
         y1[seqLenIndex(i["k2_totalElements"])].append(i["bncs_and_hist_res"])
         y2[seqLenIndex(i["k2_totalElements"])].append(i["hfuse_res"])
 
     fig = plt.figure(num=1)
-    fig.set_size_inches(12, 8)
+    fig.set_size_inches(18, 8)
     ax = fig.add_subplot(231)
     x = np.arange(len(heights))
     ax.plot(x, y1["2^20"], label="bncs&hist", linewidth=1, linestyle="solid")
     ax.plot(x, y2["2^20"], label="hfuse", linewidth=1, linestyle="solid")
-    ax.set_ylim(0, 1.9)
-    ax.set_xticks(np.linspace(0, 7, 8))
+    ax.set_ylim(0, 7.8)
+    ax.set_xticks(np.linspace(0, 6, 7))
     ax.set_xticklabels(heights)
     ax.grid()
     ax.legend()
@@ -54,8 +53,8 @@ def main():
     x = np.arange(len(heights))
     ax.plot(x, y1["2^21"], label="bncs&hist", linewidth=1, linestyle="solid")
     ax.plot(x, y2["2^21"], label="hfuse", linewidth=1, linestyle="solid")
-    ax.set_ylim(0, 1.9)
-    ax.set_xticks(np.linspace(0, 7, 8))
+    ax.set_ylim(0, 7.8)
+    ax.set_xticks(np.linspace(0, 6, 7))
     ax.set_xticklabels(heights)
     ax.grid()
     ax.legend()
@@ -65,8 +64,8 @@ def main():
     x = np.arange(len(heights))
     ax.plot(x, y1["2^22"], label="bncs&hist", linewidth=1, linestyle="solid")
     ax.plot(x, y2["2^22"], label="hfuse", linewidth=1, linestyle="solid")
-    ax.set_ylim(0, 1.9)
-    ax.set_xticks(np.linspace(0, 7, 8))
+    ax.set_ylim(0, 7.8)
+    ax.set_xticks(np.linspace(0, 6, 7))
     ax.set_xticklabels(heights)
     ax.grid()
     ax.legend()
@@ -76,8 +75,8 @@ def main():
     x = np.arange(len(heights))
     ax.plot(x, y1["2^23"], label="bncs&hist", linewidth=1, linestyle="solid")
     ax.plot(x, y2["2^23"], label="hfuse", linewidth=1, linestyle="solid")
-    ax.set_ylim(0, 5)
-    ax.set_xticks(np.linspace(0, 7, 8))
+    ax.set_ylim(0, 7.8)
+    ax.set_xticks(np.linspace(0, 6, 7))
     ax.set_xticklabels(heights)
     ax.grid()
     ax.legend()
@@ -87,8 +86,8 @@ def main():
     x = np.arange(len(heights))
     ax.plot(x, y1["2^24"], label="bncs&hist", linewidth=1, linestyle="solid")
     ax.plot(x, y2["2^24"], label="hfuse", linewidth=1, linestyle="solid")
-    ax.set_ylim(0, 5)
-    ax.set_xticks(np.linspace(0, 7, 8))
+    ax.set_ylim(0, 7.8)
+    ax.set_xticks(np.linspace(0, 6, 7))
     ax.set_xticklabels(heights)
     ax.grid()
     ax.legend()
@@ -98,8 +97,8 @@ def main():
     x = np.arange(len(heights))
     ax.plot(x, y1["2^25"], label="bncs&hist", linewidth=1, linestyle="solid")
     ax.plot(x, y2["2^25"], label="hfuse", linewidth=1, linestyle="solid")
-    ax.set_ylim(0, 4.65)
-    ax.set_xticks(np.linspace(0, 7, 8))
+    ax.set_ylim(0, 8)
+    ax.set_xticks(np.linspace(0, 6, 7))
     ax.set_xticklabels(heights)
     ax.grid()
     ax.legend()

@@ -195,9 +195,9 @@ void benchmark() {
     auto jfile = fopen("./out.json", "w");
     fprintf(jfile, "[");
     bool jsoncomma = false;
-    // Do benchmark
-    const int loop = 5000;
-    for (int height = 64; height <= 8192; height *= 2) {
+    // Do wide benchmark
+    const int loop = 2000;
+    for (int height = 256; height <= 16384; height *= 2) {
         const int k1_total_elements = height * width * depth;
         float* h_input = (float*)malloc(k1_total_elements * sizeof(float));
         // Init random content

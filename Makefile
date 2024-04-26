@@ -13,7 +13,7 @@ OBJ_DIR = bin
 INC_DIR = include
 
 EXE = main
-OBJS = $(OBJ_DIR)/main.o $(OBJ_DIR)/batch_norm_collect_statistics_gpu.o $(OBJ_DIR)/batch_norm_collect_statistics_cpu.o $(OBJ_DIR)/histogram1d_gpu.o $(OBJ_DIR)/histogram1d_cpu.o $(OBJ_DIR)/hfused_kernel.o
+OBJS = $(OBJ_DIR)/main.o $(OBJ_DIR)/batch_norm_collect_statistics_gpu.o $(OBJ_DIR)/batch_norm_collect_statistics_cpu.o $(OBJ_DIR)/histogram1d_gpu.o $(OBJ_DIR)/histogram1d_cpu.o $(OBJ_DIR)/hfused_kernel.o $(OBJ_DIR)/bncs_and_hist.o
 
 $(EXE) : $(OBJS)
 	$(NVCC) $(NVCC_FLAGS) $(OBJS) -o $@ $(CUDA_INC_DIR) $(CUDA_LIB_DIR) $(CUDA_LINK_LIBS)

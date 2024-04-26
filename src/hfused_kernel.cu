@@ -179,7 +179,7 @@ __global__ void hfused_kernel_kernel7_1(
     }
 
 K1_end:
-    if (global_tid < 896) goto K2_end;  // TODO: results are all zero, fix it
+    if (global_tid < 896) goto K2_end;
     // PARTA:Initialize shared memory counters
     for (int idx = threadIdx_x; idx < nbins; idx += blockDim_x) {
         k2smem[idx] = 0;
@@ -215,9 +215,7 @@ void hfused(const float* k1_input, int height, int width, int depth,
             float epsilon, float* h_mean,
             float* h_transformed_var /* params for kernel1*/, float* k2_output,
             const float* k2_input, int nbins, float minvalue, float maxvalue,
-            int totalElements /* params for kernel2*/
-
-) {
+            int totalElements /* params for kernel2*/) {
     // Allocation for batch_norm_collect_statistics
     float *d_k1_input, *d_k1_out_mean, *d_k1_out_transformed_var;
     const int total_elements = height * width * depth;
@@ -262,4 +260,80 @@ void hfused(const float* k1_input, int height, int width, int depth,
     cudaFree(d_k1_out_transformed_var);
     cudaFree(d_k2_output);
     cudaFree(d_k2_input);
+}
+
+float benchmark_hfused(const float* k1_input, int height, int width, int depth,
+                       float epsilon, float* h_mean,
+                       float* h_transformed_var /* params for kernel1*/,
+                       float* k2_output, const float* k2_input, int nbins,
+                       float minvalue, float maxvalue,
+                       int totalElements, /* params for kernel2*/
+                       const int loop) {
+    // Allocation for batch_norm_collect_statistics
+    float *d_k1_input, *d_k1_out_mean, *d_k1_out_transformed_var;
+    const int total_elements = height * width * depth;
+    cudaMalloc(&d_k1_input, total_elements * sizeof(float));
+    cudaMalloc(&d_k1_out_mean, width * sizeof(float));
+    cudaMalloc(&d_k1_out_transformed_var, width * sizeof(float));
+
+    // Allocation for histogram1D
+    size_t k2_size = totalElements * sizeof(float);
+    float *d_k2_output, *d_k2_input;
+    cudaMalloc(&d_k2_output, nbins * sizeof(float));
+    cudaMalloc(&d_k2_input, k2_size);
+
+    // Copy data from host to device
+    cudaMemcpy(d_k1_input, k1_input, total_elements * sizeof(float),
+               cudaMemcpyHostToDevice);
+    cudaMemcpy(d_k2_input, k2_input, k2_size, cudaMemcpyHostToDevice);
+    cudaMemset(d_k2_output, 0, nbins * sizeof(float));
+
+    /* Two kernel use different size of shared memory
+     * We allocate one dynamic shared memory and they will share it. */
+    size_t shmem_size = (2 * 2 * WARP_SIZE + WARP_SIZE) * sizeof(int) +
+                        (2 * WARP_SIZE) * sizeof(float) + nbins * sizeof(float);
+
+    int gridDim = 128;
+    int blockDim = 1024;
+
+    // Warm up
+    for (int i = 0; i < 5; i++) {
+        hfused_kernel_kernel7_1<<<gridDim, blockDim, shmem_size>>>(
+            d_k1_input, height, width, depth, epsilon, d_k1_out_mean,
+            d_k1_out_transformed_var, d_k2_output, d_k2_input, nbins, minvalue,
+            maxvalue, totalElements);
+    }
+
+    float msec = 0.0;
+    float total = 0.0;
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    for (int i = 0; i < loop; i++) {
+        cudaEventRecord(start);
+        hfused_kernel_kernel7_1<<<gridDim, blockDim, shmem_size>>>(
+            d_k1_input, height, width, depth, epsilon, d_k1_out_mean,
+            d_k1_out_transformed_var, d_k2_output, d_k2_input, nbins, minvalue,
+            maxvalue, totalElements);
+        cudaEventRecord(stop);
+        cudaEventSynchronize(stop);
+        cudaEventElapsedTime(&msec, start, stop);
+        total += msec;
+    }
+
+    // Copy data from device to host
+    cudaMemcpy(h_mean, d_k1_out_mean, width * sizeof(float),
+               cudaMemcpyDeviceToHost);
+    cudaMemcpy(h_transformed_var, d_k1_out_transformed_var,
+               width * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(k2_output, d_k2_output, nbins * sizeof(float),
+               cudaMemcpyDeviceToHost);
+
+    cudaFree(d_k1_input);
+    cudaFree(d_k1_out_mean);
+    cudaFree(d_k1_out_transformed_var);
+    cudaFree(d_k2_output);
+    cudaFree(d_k2_input);
+
+    return total / loop;
 }

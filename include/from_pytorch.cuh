@@ -4,7 +4,7 @@
 #include <cuda_runtime.h>
 #include <stdint.h>
 
-#define C10_WARP_SIZE 32  // Standard warp size for NVIDIA GPUs
+#define WARP_SIZE 32  // Standard warp size for NVIDIA GPUs
 
 __device__ __forceinline__ int getMSB(int val) { return 31 - __clz(val); }
 

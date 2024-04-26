@@ -76,3 +76,51 @@ void histogram1D_gpu(float* h_a,       /* output */
     cudaFree(d_a);
     cudaFree(d_b);
 }
+
+float benchmark_histogram1D_gpu(float* h_a,       /* output */
+                                const float* h_b, /* input */
+                                int nbins, float minvalue, float maxvalue,
+                                int totalElements, const int loop) {
+    size_t size = totalElements * sizeof(float);
+
+    // Allocate memory
+    float *d_a, *d_b;
+    cudaMalloc(&d_a, nbins * sizeof(float));
+    cudaMalloc(&d_b, size);
+
+    // Copy data to device
+    cudaMemcpy(d_b, h_b, size, cudaMemcpyHostToDevice);
+    cudaMemset(d_a, 0, nbins * sizeof(float));
+
+    // Configure kernel
+    int threadsPerBlock = 128;
+    int blocksPerGrid = 128;
+
+    // Warm up
+    for (int i = 0; i < 5; i++) {
+        histogram1D_kernel<<<blocksPerGrid, threadsPerBlock,
+                             nbins * sizeof(float)>>>(d_a, d_b, nbins, minvalue,
+                                                      maxvalue, totalElements);
+    }
+
+    float msec = 0.0;
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    for (int i = 0; i < loop; i++) {
+        cudaEventRecord(start);
+        histogram1D_kernel<<<blocksPerGrid, threadsPerBlock,
+                             nbins * sizeof(float)>>>(d_a, d_b, nbins, minvalue,
+                                                      maxvalue, totalElements);
+        cudaEventRecord(stop);
+        cudaEventSynchronize(stop);
+        cudaEventElapsedTime(&msec, start, stop);
+    }
+
+    cudaMemcpy(h_a, d_a, nbins * sizeof(float), cudaMemcpyDeviceToHost);
+
+    cudaFree(d_a);
+    cudaFree(d_b);
+
+    return msec / loop;
+}

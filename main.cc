@@ -8,7 +8,7 @@
 #include "include/histogram1d_cpu.h"
 #include "include/histogram1d_gpu.cuh"
 
-void do_batch_norm_collect_statistics() {
+void test_batch_norm_collect_statistics() {
     // Initialize random seed
     srand(time(NULL));
 
@@ -67,7 +67,7 @@ void do_batch_norm_collect_statistics() {
     free(h_transformed_var);
 }
 
-void do_histogram1d() {
+void test_histogram1d() {
     srand(time(NULL));  // Seed for random number generation
     int nbins = 256;
     float minvalue = 0.0f;
@@ -101,7 +101,7 @@ void do_histogram1d() {
     free(h_b);
 }
 
-void do_hfused() {
+void test_hfused() {
     // Initialize random seed
     srand(time(NULL));
 
@@ -172,11 +172,67 @@ void do_hfused() {
     free(h_b);
 }
 
+void benchmark() {
+    // Initialize random seed
+    srand(time(NULL));
+
+    // Init for batch_norm_collect_statistics
+    const int height = 128;  // Number of batches
+    const int width = 128;   // Number of channels (planes in the kernel)
+    const int depth = 256;   // Spatial dimension (combined x/y/z)
+    const int k1_total_elements = height * width * depth;
+    float epsilon = 0.00001f;
+    float* h_input = (float*)malloc(k1_total_elements * sizeof(float));
+    float* h_mean = (float*)malloc(width * sizeof(float));
+    float* h_transformed_var = (float*)malloc(width * sizeof(float));
+
+    // Init for histogram1d
+    int nbins = 256;
+    float minvalue = 0.0f;
+    float maxvalue = 100.0f;
+    int k2_totalElements = 1024 * 1024;  // 1M elements
+    float* h_a = (float*)malloc(nbins * sizeof(float));
+    float* h_b = (float*)malloc(k2_totalElements * sizeof(float));
+
+    // Initialize input with random values
+    for (int i = 0; i < k1_total_elements; ++i) {
+        h_input[i] = (float)rand() / (float)RAND_MAX;
+    }
+    for (int i = 0; i < k2_totalElements; ++i) {
+        h_b[i] = static_cast<float>(rand()) /
+                 (static_cast<float>(RAND_MAX / maxvalue));
+    }
+
+    // Do benchmark
+    const int loop = 2000;
+    float bncs_res = benchmark_batch_norm_collect_statistics_gpu(
+        h_input, height, width, depth, epsilon, h_mean, h_transformed_var,
+        loop);
+    float histres = benchmark_histogram1D_gpu(h_a, h_b, nbins, minvalue,
+                                              maxvalue, k2_totalElements, loop);
+    float hfuse_res = benchmark_hfused(
+        h_input, height, width, depth, epsilon, h_mean, h_transformed_var, h_a,
+        h_b, nbins, minvalue, maxvalue, k2_totalElements, loop);
+
+    printf(
+        "Benchmark results:\n batch_norm_collect_statistics: %f "
+        "ms\nhistogram1D: %f ms\nhfused: %f\nspeedup: %f\n",
+        bncs_res, histres, hfuse_res,
+        (bncs_res + histres - hfuse_res) / (bncs_res + histres));
+
+    free(h_input);
+    free(h_mean);
+    free(h_transformed_var);
+    free(h_a);
+    free(h_b);
+}
+
 int main() {
-    // printf("batch_norm_collect_statistics\n");
-    // do_batch_norm_collect_statistics();
-    // printf("histogram1d\n");
-    // do_histogram1d();
-    do_hfused();
+#if 0
+    test_batch_norm_collect_statistics();
+    test_histogram1d();
+    test_hfused();
+#endif
+    benchmark();
     return 0;
 }

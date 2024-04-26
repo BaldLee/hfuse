@@ -124,3 +124,53 @@ void batch_norm_collect_statistics_gpu(const float* h_input, int height,
     cudaFree(d_mean);
     cudaFree(d_transformed_var);
 }
+
+float benchmark_batch_norm_collect_statistics_gpu(
+    const float* h_input, int height, int width, int depth, float epsilon,
+    float* h_mean, float* h_transformed_var, const int loop) {
+    // Allocate memory on device
+    float *d_input, *d_mean, *d_transformed_var;
+    const int total_elements = height * width * depth;
+    cudaMalloc(&d_input, total_elements * sizeof(float));
+    cudaMalloc(&d_mean, width * sizeof(float));
+    cudaMalloc(&d_transformed_var, width * sizeof(float));
+
+    // Copy data from host to device
+    cudaMemcpy(d_input, h_input, total_elements * sizeof(float),
+               cudaMemcpyHostToDevice);
+
+    // Kernel dimensions
+    dim3 blocks(width);    // One block per channel
+    dim3 threads(16, 16);  // 256 threads per block
+
+    // Warm up
+    for (int i = 0; i < 5; i++) {
+        batch_norm_collect_statistics_kernel<<<blocks, threads>>>(
+            d_input, height, width, depth, epsilon, d_mean, d_transformed_var);
+    }
+
+    float msec = 0.0;
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    for (int i = 0; i < loop; i++) {
+        cudaEventRecord(start);
+        batch_norm_collect_statistics_kernel<<<blocks, threads>>>(
+            d_input, height, width, depth, epsilon, d_mean, d_transformed_var);
+        cudaEventRecord(stop);
+        cudaEventSynchronize(stop);
+        cudaEventElapsedTime(&msec, start, stop);
+    }
+
+    // Copy results back to host
+    cudaMemcpy(h_mean, d_mean, width * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(h_transformed_var, d_transformed_var, width * sizeof(float),
+               cudaMemcpyDeviceToHost);
+
+    // Free device memory
+    cudaFree(d_input);
+    cudaFree(d_mean);
+    cudaFree(d_transformed_var);
+
+    return msec / loop;
+}

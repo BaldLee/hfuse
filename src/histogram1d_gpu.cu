@@ -1,6 +1,5 @@
-#include <cuda_runtime.h>
-
 #include "../include/histogram1d_gpu.cuh"
+#include "../include/histogram1d_gpu.h"
 
 /* This kernel comes from pytorch/aten/src/ATen/native/cuda/SummaryOps.cu
  * (pytorch/pytorch commit d59f1da6)
@@ -104,6 +103,7 @@ float benchmark_histogram1D_gpu(float* h_a,       /* output */
     }
 
     float msec = 0.0;
+    float total = 0.0;
     cudaEvent_t start, stop;
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
@@ -115,6 +115,7 @@ float benchmark_histogram1D_gpu(float* h_a,       /* output */
         cudaEventRecord(stop);
         cudaEventSynchronize(stop);
         cudaEventElapsedTime(&msec, start, stop);
+        total += msec;
     }
 
     cudaMemcpy(h_a, d_a, nbins * sizeof(float), cudaMemcpyDeviceToHost);
@@ -122,5 +123,5 @@ float benchmark_histogram1D_gpu(float* h_a,       /* output */
     cudaFree(d_a);
     cudaFree(d_b);
 
-    return msec / loop;
+    return total / loop;
 }

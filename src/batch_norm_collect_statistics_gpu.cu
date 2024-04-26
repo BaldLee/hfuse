@@ -1,6 +1,7 @@
 #include <cuda_runtime.h>
 
 #include "../include/batch_norm_collect_statistics_gpu.cuh"
+#include "../include/batch_norm_collect_statistics_gpu.h"
 #include "../include/from_pytorch.cuh"
 
 /* This kernel comes from pytorch/aten/src/ATen/native/cuda/Normalization.cuh
@@ -114,8 +115,6 @@ void batch_norm_collect_statistics_gpu(const float* h_input, int height,
     batch_norm_collect_statistics_kernel<<<blocks, threads>>>(
         d_input, height, width, depth, epsilon, d_mean, d_transformed_var);
 
-    printf("%s\n", cudaGetErrorString(cudaGetLastError()));
-
     // Copy results back to host
     cudaMemcpy(h_mean, d_mean, width * sizeof(float), cudaMemcpyDeviceToHost);
     cudaMemcpy(h_transformed_var, d_transformed_var, width * sizeof(float),
@@ -152,6 +151,7 @@ float benchmark_batch_norm_collect_statistics_gpu(
     }
 
     float msec = 0.0;
+    float total = 0.0;
     cudaEvent_t start, stop;
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
@@ -162,6 +162,7 @@ float benchmark_batch_norm_collect_statistics_gpu(
         cudaEventRecord(stop);
         cudaEventSynchronize(stop);
         cudaEventElapsedTime(&msec, start, stop);
+        total += msec;
     }
 
     // Copy results back to host
@@ -174,5 +175,5 @@ float benchmark_batch_norm_collect_statistics_gpu(
     cudaFree(d_mean);
     cudaFree(d_transformed_var);
 
-    return msec / loop;
+    return total / loop;
 }

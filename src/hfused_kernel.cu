@@ -305,6 +305,7 @@ float benchmark_hfused(const float* k1_input, int height, int width, int depth,
     }
 
     float msec = 0.0;
+    float total = 0.0;
     cudaEvent_t start, stop;
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
@@ -317,6 +318,7 @@ float benchmark_hfused(const float* k1_input, int height, int width, int depth,
         cudaEventRecord(stop);
         cudaEventSynchronize(stop);
         cudaEventElapsedTime(&msec, start, stop);
+        total += msec;
     }
 
     // Copy data from device to host
@@ -333,5 +335,5 @@ float benchmark_hfused(const float* k1_input, int height, int width, int depth,
     cudaFree(d_k2_output);
     cudaFree(d_k2_input);
 
-    return msec / loop;
+    return total / loop;
 }

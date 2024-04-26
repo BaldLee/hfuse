@@ -3,10 +3,11 @@
 #include <time.h>
 
 #include "include/batch_norm_collect_statistics_cpu.h"
-#include "include/batch_norm_collect_statistics_gpu.cuh"
+#include "include/batch_norm_collect_statistics_gpu.h"
+#include "include/bncs_and_hist.h"
 #include "include/hfused_kernel.cuh"
 #include "include/histogram1d_cpu.h"
-#include "include/histogram1d_gpu.cuh"
+#include "include/histogram1d_gpu.h"
 
 void test_batch_norm_collect_statistics() {
     // Initialize random seed
@@ -196,16 +197,13 @@ void benchmark() {
     bool jsoncomma = false;
     // Do benchmark
     const int loop = 10000;
-    for (int height = 64; height <= 2048; height *= 2) {
+    for (int height = 64; height <= 4096; height *= 2) {
         const int k1_total_elements = height * width * depth;
         float* h_input = (float*)malloc(k1_total_elements * sizeof(float));
         // Init random content
         for (int i = 0; i < k1_total_elements; ++i) {
             h_input[i] = (float)rand() / (float)RAND_MAX;
         }
-        float bncs_res = benchmark_batch_norm_collect_statistics_gpu(
-            h_input, height, width, depth, epsilon, h_mean, h_transformed_var,
-            loop);
         for (unsigned int k2_totalElements = 1 << 20;
              k2_totalElements <= 8 * 1 << 20; k2_totalElements *= 2) {
             float* h_b = (float*)malloc(k2_totalElements * sizeof(float));
@@ -214,19 +212,21 @@ void benchmark() {
                 h_b[i] = static_cast<float>(rand()) /
                          (static_cast<float>(RAND_MAX / maxvalue));
             }
-            float hist_res = benchmark_histogram1D_gpu(
-                h_a, h_b, nbins, minvalue, maxvalue, k2_totalElements, loop);
+            float bncs_hist_res = benchmark_bncs_and_hist(
+                h_input, height, width, depth, epsilon, h_mean,
+                h_transformed_var, h_a, h_b, nbins, minvalue, maxvalue,
+                k2_totalElements, loop);
+
             float hfuse_res =
                 benchmark_hfused(h_input, height, width, depth, epsilon, h_mean,
                                  h_transformed_var, h_a, h_b, nbins, minvalue,
                                  maxvalue, k2_totalElements, loop);
 
             printf(
-                "Benchmark[height: %d, k2_totalElements: "
-                "%d]:\nbatch_norm_collect_statistics: %f "
-                "ms\nhistogram1D: %f ms\nhfused: %f\nspeedup: %f\n",
-                height, k2_totalElements, bncs_res, hist_res, hfuse_res,
-                (bncs_res + hist_res - hfuse_res) / (bncs_res + hist_res));
+                "Benchmark[height: %d, k2_totalElements: %d]:\nBNCS and HIST: "
+                "%f\nhfused: %f\nspeedup: %f\n",
+                height, k2_totalElements, bncs_hist_res, hfuse_res,
+                (bncs_hist_res - hfuse_res) / bncs_hist_res);
 
             if (jsoncomma) {
                 fprintf(jfile, ",");
@@ -235,9 +235,9 @@ void benchmark() {
             }
 
             fprintf(jfile,
-                    "{\"height\":%d,\"k2_totalElements\":%d,\"bncs_res\":%f,"
-                    "\"hist_res\":%f,\"hfuse_res\":%f}",
-                    height, k2_totalElements, bncs_res, hist_res, hfuse_res);
+                    "{\"height\":%d,\"k2_totalElements\":%d,\"bncs_and_hist_"
+                    "res\":%f,\"hfuse_res\":%f}",
+                    height, k2_totalElements, bncs_hist_res, hfuse_res);
 
             free(h_b);
         }

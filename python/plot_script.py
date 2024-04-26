@@ -37,7 +37,7 @@ def main():
         y2[seqLenIndex(i["k2_totalElements"])].append(i["hfuse_res"])
 
     fig = plt.figure(num=1)
-    fig.set_size_inches(18, 8)
+    fig.set_size_inches(16, 10)
     ax = fig.add_subplot(231)
     x = np.arange(len(heights))
     ax.plot(x, y1["2^20"], label="bncs&hist", linewidth=1, linestyle="solid")

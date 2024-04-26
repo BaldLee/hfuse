@@ -1,6 +1,6 @@
 CUDA_ROOT_DIR = /usr/local/cuda-11.7
 
-NVCC = nvcc
+NVCC = $(CUDA_ROOT_DIR)/bin/nvcc
 NVCC_FLAGS = 
 NVCC_LIBS = 
 

@@ -6,6 +6,7 @@ mytest.py
 *.log
 out.json
 *.png
+*.ncu-rep
 
 # Prerequisites
 *.d

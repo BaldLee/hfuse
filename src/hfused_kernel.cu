@@ -76,23 +76,18 @@ __global__ void hfused_kernel_kernel7_1(
     // Prologue of the fused kernel
     int global_tid = threadIdx.x + threadIdx.y * blockDim.x +
                      threadIdx.z * blockDim.x * blockDim.y;
-    int threadIdx_x, threadIdx_y, threadIdx_z, blockDim_x, blockDim_y,
-        blockDim_z;
+    int threadIdx_x, threadIdx_y, blockDim_x, blockDim_y;
 
     if (global_tid < 896) {
         blockDim_x = 896 / 16;  // origin: (16,16), now: (56,16)
         blockDim_y = 16;
-        blockDim_z = 1;
         threadIdx_x = global_tid % blockDim_x;
         threadIdx_y = global_tid / blockDim_x % blockDim_y;
-        threadIdx_z = 1;
     } else {
         blockDim_x = 128;
         blockDim_y = 1;
-        blockDim_z = 1;
         threadIdx_x = (global_tid - 896) % blockDim_x;
         threadIdx_y = 1;
-        threadIdx_z = 1;
     }
     // Variable decls for batch_norm_collect_statistics()
     extern __shared__ float smem[];

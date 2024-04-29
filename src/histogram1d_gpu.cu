@@ -32,6 +32,8 @@ __global__ void histogram1D_kernel(float* a,       /* output */
         if (bVal >= minvalue && bVal <= maxvalue) {
             int bin = static_cast<int>((bVal - minvalue) /
                                        (maxvalue - minvalue) * nbins);
+            /* If the value equals to maxvlue, bin = nbins, which will overflow.
+             * This branch will affect the performance slightly. */
             if (bin == nbins) {
                 bin -= 1;
             }
@@ -63,12 +65,11 @@ void histogram1D_gpu(float* h_a,       /* output */
     cudaMemset(d_a, 0, nbins * sizeof(float));
 
     // Configure kernel
-    int threadsPerBlock = 128;
-    int blocksPerGrid = 128;
+    int grid_dim = 128;
+    int block_dim = 128;
 
-    histogram1D_kernel<<<blocksPerGrid, threadsPerBlock,
-                         nbins * sizeof(float)>>>(d_a, d_b, nbins, minvalue,
-                                                  maxvalue, totalElements);
+    histogram1D_kernel<<<grid_dim, block_dim, nbins * sizeof(float)>>>(
+        d_a, d_b, nbins, minvalue, maxvalue, totalElements);
 
     cudaMemcpy(h_a, d_a, nbins * sizeof(float), cudaMemcpyDeviceToHost);
 

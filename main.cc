@@ -9,6 +9,8 @@
 #include "include/histogram1d_cpu.h"
 #include "include/histogram1d_gpu.h"
 
+// #define PRINT_RES 1
+
 void test_batch_norm_collect_statistics() {
     // Initialize random seed
     srand(time(NULL));
@@ -36,6 +38,7 @@ void test_batch_norm_collect_statistics() {
     batch_norm_collect_statistics_cpu(h_input, height, width, depth, epsilon,
                                       h_mean, h_transformed_var);
 
+#ifdef PRINT_RES
     // Print CPU results
     printf("CPU Mean values:\n");
     for (int i = 0; i < width; ++i) {
@@ -46,11 +49,13 @@ void test_batch_norm_collect_statistics() {
     for (int i = 0; i < width; ++i) {
         printf("Transformed Variance[%d]: %f\n", i, h_transformed_var[i]);
     }
+#endif
 
     // Test for gpu
     batch_norm_collect_statistics_gpu(h_input, height, width, depth, epsilon,
                                       h_mean, h_transformed_var);
 
+#ifdef PRINT_RES
     // Print results
     printf("GPU Mean values:\n");
     for (int i = 0; i < width; ++i) {
@@ -61,6 +66,7 @@ void test_batch_norm_collect_statistics() {
     for (int i = 0; i < width; ++i) {
         printf("Transformed Variance[%d]: %f\n", i, h_transformed_var[i]);
     }
+#endif
 
     // Free host memory
     free(h_input);
@@ -73,7 +79,7 @@ void test_histogram1d() {
     int nbins = 256;
     float minvalue = 0.0f;
     float maxvalue = 100.0f;
-    int totalElements = 1024 * 1024;  // 1M elements
+    int totalElements = 1 * 1024 * 1024;  // 1M elements
 
     float* h_a = (float*)malloc(nbins * sizeof(float));
     float* h_b = (float*)malloc(totalElements * sizeof(float));
@@ -86,17 +92,25 @@ void test_histogram1d() {
 
     // Test for cpu
     histogram1D_cpu(h_a, h_b, nbins, minvalue, maxvalue, totalElements);
+
+#ifdef PRINT_RES
+    // Print results
     printf("CPU results:\n");
     for (int i = 0; i < nbins; i++) {
         printf("a[%d]: %f\n", i, h_a[i]);
     }
+#endif
 
     // Test for gpu
     histogram1D_gpu(h_a, h_b, nbins, minvalue, maxvalue, totalElements);
+
+#ifdef PRINT_RES
+    // Print results
     printf("GPU results:\n");
     for (int i = 0; i < nbins; i++) {
         printf("a[%d]: %f\n", i, h_a[i]);
     }
+#endif
 
     free(h_a);
     free(h_b);
@@ -136,6 +150,9 @@ void test_hfused() {
     // Test for CPU
     batch_norm_collect_statistics_cpu(h_input, height, width, depth, epsilon,
                                       h_mean, h_transformed_var);
+    histogram1D_cpu(h_a, h_b, nbins, minvalue, maxvalue, k2_totalElements);
+
+#ifdef PRINT_RES
     printf("BNCS CPU Mean values:\n");
     for (int i = 0; i < width; ++i) {
         printf("Mean[%d]: %f\n", i, h_mean[i]);
@@ -144,15 +161,17 @@ void test_hfused() {
     for (int i = 0; i < width; ++i) {
         printf("Transformed Variance[%d]: %f\n", i, h_transformed_var[i]);
     }
-    histogram1D_cpu(h_a, h_b, nbins, minvalue, maxvalue, k2_totalElements);
     printf("histogram1D CPU results:\n");
     for (int i = 0; i < nbins; i++) {
         printf("a[%d]: %f\n", i, h_a[i]);
     }
+#endif
 
     // Test for hfuse
     hfused(h_input, height, width, depth, epsilon, h_mean, h_transformed_var,
            h_a, h_b, nbins, minvalue, maxvalue, k2_totalElements);
+
+#ifdef PRINT_RES
     printf("BNCS GPU Mean values:\n");
     for (int i = 0; i < width; ++i) {
         printf("Mean[%d]: %f\n", i, h_mean[i]);
@@ -165,6 +184,7 @@ void test_hfused() {
     for (int i = 0; i < nbins; i++) {
         printf("a[%d]: %f\n", i, h_a[i]);
     }
+#endif
 
     free(h_input);
     free(h_mean);
@@ -222,11 +242,13 @@ void benchmark() {
                                  h_transformed_var, h_a, h_b, nbins, minvalue,
                                  maxvalue, k2_totalElements, loop);
 
+#ifdef PRINT_RES
             printf(
                 "Benchmark[height: %d, k2_totalElements: %d]:\nBNCS and HIST: "
                 "%f\nhfused: %f\nspeedup: %f\n",
                 height, k2_totalElements, bncs_hist_res, hfuse_res,
                 (bncs_hist_res - hfuse_res) / bncs_hist_res);
+#endif
 
             if (jsoncomma) {
                 fprintf(jfile, ",");
@@ -257,6 +279,6 @@ int main() {
     test_hfused();
     benchmark();
 #endif
-    benchmark();
+    test_batch_norm_collect_statistics();
     return 0;
 }

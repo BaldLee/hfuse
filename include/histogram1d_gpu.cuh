@@ -8,6 +8,6 @@
 __global__ void histogram1D_kernel(float* a,       /* output */
                                    const float* b, /* input */
                                    int nbins, float minvalue, float maxvalue,
-                                   int totalElements);
+                                   int total_elements);
 
 #endif  // __HISTOGRAM1D_CUH__

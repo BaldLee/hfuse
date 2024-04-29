@@ -16,7 +16,7 @@
 __global__ void histogram1D_kernel(float* a,       /* output */
                                    const float* b, /* input */
                                    int nbins, float minvalue, float maxvalue,
-                                   int totalElements) {
+                                   int total_elements) {
     extern __shared__ float smem[];
 
     // PARTA:Initialize shared memory counters
@@ -27,7 +27,7 @@ __global__ void histogram1D_kernel(float* a,       /* output */
 
     // PART B: Go over the input b to increment shared counters
     int i = threadIdx.x + blockIdx.x * blockDim.x;
-    while (i < totalElements) {
+    while (i < total_elements) {
         float bVal = b[i];
         if (bVal >= minvalue && bVal <= maxvalue) {
             int bin = static_cast<int>((bVal - minvalue) /
@@ -52,8 +52,8 @@ __global__ void histogram1D_kernel(float* a,       /* output */
 void histogram1D_gpu(float* h_a,       /* output */
                      const float* h_b, /* input */
                      int nbins, float minvalue, float maxvalue,
-                     int totalElements) {
-    size_t size = totalElements * sizeof(float);
+                     int total_elements) {
+    size_t size = total_elements * sizeof(float);
 
     // Allocate memory
     float *d_a, *d_b;
@@ -69,7 +69,7 @@ void histogram1D_gpu(float* h_a,       /* output */
     int block_dim = 128;
 
     histogram1D_kernel<<<grid_dim, block_dim, nbins * sizeof(float)>>>(
-        d_a, d_b, nbins, minvalue, maxvalue, totalElements);
+        d_a, d_b, nbins, minvalue, maxvalue, total_elements);
 
     cudaMemcpy(h_a, d_a, nbins * sizeof(float), cudaMemcpyDeviceToHost);
 
@@ -80,8 +80,8 @@ void histogram1D_gpu(float* h_a,       /* output */
 float benchmark_histogram1D_gpu(float* h_a,       /* output */
                                 const float* h_b, /* input */
                                 int nbins, float minvalue, float maxvalue,
-                                int totalElements, const int loop) {
-    size_t size = totalElements * sizeof(float);
+                                int total_elements, const int loop) {
+    size_t size = total_elements * sizeof(float);
 
     // Allocate memory
     float *d_a, *d_b;
@@ -100,7 +100,7 @@ float benchmark_histogram1D_gpu(float* h_a,       /* output */
     for (int i = 0; i < 5; i++) {
         histogram1D_kernel<<<blocksPerGrid, threadsPerBlock,
                              nbins * sizeof(float)>>>(d_a, d_b, nbins, minvalue,
-                                                      maxvalue, totalElements);
+                                                      maxvalue, total_elements);
     }
 
     float msec = 0.0;
@@ -112,7 +112,7 @@ float benchmark_histogram1D_gpu(float* h_a,       /* output */
         cudaEventRecord(start);
         histogram1D_kernel<<<blocksPerGrid, threadsPerBlock,
                              nbins * sizeof(float)>>>(d_a, d_b, nbins, minvalue,
-                                                      maxvalue, totalElements);
+                                                      maxvalue, total_elements);
         cudaEventRecord(stop);
         cudaEventSynchronize(stop);
         cudaEventElapsedTime(&msec, start, stop);

@@ -33,8 +33,8 @@ def main():
         y2[seqLenIndex(i)] = []
 
     for i in jobj:
-        y1[seqLenIndex(i["k2_totalElements"])].append(i["bncs_and_hist_res"])
-        y2[seqLenIndex(i["k2_totalElements"])].append(i["hfuse_res"])
+        y1[seqLenIndex(i["k2_total_elements"])].append(i["bncs_and_hist_res"])
+        y2[seqLenIndex(i["k2_total_elements"])].append(i["hfuse_res"])
 
     fig = plt.figure(num=1)
     fig.set_size_inches(16, 10)

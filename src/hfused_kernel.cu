@@ -1,7 +1,4 @@
-#include <cuda_runtime.h>
-#include <stdio.h>
-
-#include "../include/from_pytorch.cuh"
+#include "../include/hfused.h"
 #include "../include/hfused_kernel.cuh"
 
 // Refernce code from the paper
@@ -72,7 +69,7 @@ __global__ void hfused_kernel_kernel7_1(
     const float* k1_input, int height, int width, int depth, float epsilon,
     float* out_mean, float* out_transformed_var /* params for kernel1*/,
     float* k2_output, const float* k2_input, int nbins, float minvalue,
-    float maxvalue, int totalElements /* params for kernel2*/) {
+    float maxvalue, int total_elements /* params for kernel2*/) {
     // Prologue of the fused kernel
     int global_tid = threadIdx.x + threadIdx.y * blockDim.x +
                      threadIdx.z * blockDim.x * blockDim.y;
@@ -183,7 +180,7 @@ K1_end:
     asm("bar.sync 2, 128;");
 
     // PART B: Go over the input b to increment shared counters
-    for (int i = threadIdx_x + blockIdx.x * blockDim_x; i < totalElements;
+    for (int i = threadIdx_x + blockIdx.x * blockDim_x; i < total_elements;
          i += blockDim_x * gridDim.x) {
         float bVal = k2_input[i];
         if (bVal >= minvalue && bVal <= maxvalue) {
@@ -210,22 +207,22 @@ void hfused(const float* k1_input, int height, int width, int depth,
             float epsilon, float* h_mean,
             float* h_transformed_var /* params for kernel1*/, float* k2_output,
             const float* k2_input, int nbins, float minvalue, float maxvalue,
-            int totalElements /* params for kernel2*/) {
+            int k2_total_elements /* params for kernel2*/) {
     // Allocation for batch_norm_collect_statistics
     float *d_k1_input, *d_k1_out_mean, *d_k1_out_transformed_var;
-    const int total_elements = height * width * depth;
-    cudaMalloc(&d_k1_input, total_elements * sizeof(float));
+    const int k1_total_elements = height * width * depth;
+    cudaMalloc(&d_k1_input, k1_total_elements * sizeof(float));
     cudaMalloc(&d_k1_out_mean, width * sizeof(float));
     cudaMalloc(&d_k1_out_transformed_var, width * sizeof(float));
 
     // Allocation for histogram1D
-    size_t k2_size = totalElements * sizeof(float);
+    size_t k2_size = k2_total_elements * sizeof(float);
     float *d_k2_output, *d_k2_input;
     cudaMalloc(&d_k2_output, nbins * sizeof(float));
     cudaMalloc(&d_k2_input, k2_size);
 
     // Copy data from host to device
-    cudaMemcpy(d_k1_input, k1_input, total_elements * sizeof(float),
+    cudaMemcpy(d_k1_input, k1_input, k1_total_elements * sizeof(float),
                cudaMemcpyHostToDevice);
     cudaMemcpy(d_k2_input, k2_input, k2_size, cudaMemcpyHostToDevice);
     cudaMemset(d_k2_output, 0, nbins * sizeof(float));
@@ -240,7 +237,7 @@ void hfused(const float* k1_input, int height, int width, int depth,
     hfused_kernel_kernel7_1<<<gridDim, blockDim, shmem_size>>>(
         d_k1_input, height, width, depth, epsilon, d_k1_out_mean,
         d_k1_out_transformed_var, d_k2_output, d_k2_input, nbins, minvalue,
-        maxvalue, totalElements);
+        maxvalue, k2_total_elements);
 
     // Copy data from device to host
     cudaMemcpy(h_mean, d_k1_out_mean, width * sizeof(float),
@@ -262,23 +259,23 @@ float benchmark_hfused(const float* k1_input, int height, int width, int depth,
                        float* h_transformed_var /* params for kernel1*/,
                        float* k2_output, const float* k2_input, int nbins,
                        float minvalue, float maxvalue,
-                       int totalElements, /* params for kernel2*/
+                       int k2_total_elements, /* params for kernel2*/
                        const int loop) {
     // Allocation for batch_norm_collect_statistics
     float *d_k1_input, *d_k1_out_mean, *d_k1_out_transformed_var;
-    const int total_elements = height * width * depth;
-    cudaMalloc(&d_k1_input, total_elements * sizeof(float));
+    const int k1_total_elements = height * width * depth;
+    cudaMalloc(&d_k1_input, k1_total_elements * sizeof(float));
     cudaMalloc(&d_k1_out_mean, width * sizeof(float));
     cudaMalloc(&d_k1_out_transformed_var, width * sizeof(float));
 
     // Allocation for histogram1D
-    size_t k2_size = totalElements * sizeof(float);
+    size_t k2_size = k2_total_elements * sizeof(float);
     float *d_k2_output, *d_k2_input;
     cudaMalloc(&d_k2_output, nbins * sizeof(float));
     cudaMalloc(&d_k2_input, k2_size);
 
     // Copy data from host to device
-    cudaMemcpy(d_k1_input, k1_input, total_elements * sizeof(float),
+    cudaMemcpy(d_k1_input, k1_input, k1_total_elements * sizeof(float),
                cudaMemcpyHostToDevice);
     cudaMemcpy(d_k2_input, k2_input, k2_size, cudaMemcpyHostToDevice);
     cudaMemset(d_k2_output, 0, nbins * sizeof(float));
@@ -296,7 +293,7 @@ float benchmark_hfused(const float* k1_input, int height, int width, int depth,
         hfused_kernel_kernel7_1<<<gridDim, blockDim, shmem_size>>>(
             d_k1_input, height, width, depth, epsilon, d_k1_out_mean,
             d_k1_out_transformed_var, d_k2_output, d_k2_input, nbins, minvalue,
-            maxvalue, totalElements);
+            maxvalue, k2_total_elements);
     }
 
     float msec = 0.0;
@@ -309,7 +306,7 @@ float benchmark_hfused(const float* k1_input, int height, int width, int depth,
         hfused_kernel_kernel7_1<<<gridDim, blockDim, shmem_size>>>(
             d_k1_input, height, width, depth, epsilon, d_k1_out_mean,
             d_k1_out_transformed_var, d_k2_output, d_k2_input, nbins, minvalue,
-            maxvalue, totalElements);
+            maxvalue, k2_total_elements);
         cudaEventRecord(stop);
         cudaEventSynchronize(stop);
         cudaEventElapsedTime(&msec, start, stop);

@@ -98,6 +98,6 @@ void tunning_bncs_and_hist(const int k1_total_elements, const int k2_total_eleme
 }
 
 int main(int argc, char* argv[]) {
-    tunning_bncs_and_hist(atoi(argv[1]), atoi(argv[2]), atoi(argv[3]));
+    tunning_hfuse(atoi(argv[1]), atoi(argv[2]), atoi(argv[3]));
     return 0;
 }

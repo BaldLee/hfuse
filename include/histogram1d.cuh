@@ -3,7 +3,7 @@
 
 #include <cuda_runtime.h>
 
-#include "histogram1d_gpu.h"
+#include "histogram1d.h"
 
 __global__ void histogram1D_kernel(float* a,       /* output */
                                    const float* b, /* input */

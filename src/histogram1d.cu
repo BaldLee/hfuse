@@ -1,5 +1,5 @@
-#include "../include/histogram1d_gpu.cuh"
-#include "../include/histogram1d_gpu.h"
+#include "../include/histogram1d.cuh"
+#include "../include/histogram1d.h"
 
 /* This kernel comes from pytorch/aten/src/ATen/native/cuda/SummaryOps.cu
  * (pytorch/pytorch commit d59f1da6)
@@ -49,7 +49,7 @@ __global__ void histogram1D_kernel(float* a,       /* output */
     }
 }
 
-void histogram1D_gpu(float* h_a,       /* output */
+void histogram1D(float* h_a,       /* output */
                      const float* h_b, /* input */
                      int nbins, float minvalue, float maxvalue,
                      int total_elements) {
@@ -77,7 +77,7 @@ void histogram1D_gpu(float* h_a,       /* output */
     cudaFree(d_b);
 }
 
-float benchmark_histogram1D_gpu(float* h_a,       /* output */
+float benchmark_histogram1D(float* h_a,       /* output */
                                 const float* h_b, /* input */
                                 int nbins, float minvalue, float maxvalue,
                                 int total_elements, const int loop) {

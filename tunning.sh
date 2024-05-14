@@ -8,8 +8,8 @@ log_file=tunning_res/res.log
 touch $log_file
 echo "" >$log_file
 
-for k1 in 1 2 4 8; do
-    for k2 in 1 2 4 8; do
+for k1 in 1 2 4 8 16; do
+    for k2 in 1 2 4 8 16; do
         arg0=$(($k1 * 1048576))
         arg1=$(($k2 * 262144))
         echo "${arg0} ${arg1}" >>$log_file

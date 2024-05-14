@@ -12,8 +12,8 @@ SRC_DIR = src
 OBJ_DIR = bin
 INC_DIR = include
 
-MAIN_OBJS = $(OBJ_DIR)/main.o $(OBJ_DIR)/batch_norm_collect_statistics_gpu.o $(OBJ_DIR)/batch_norm_collect_statistics_cpu.o $(OBJ_DIR)/histogram1d_gpu.o $(OBJ_DIR)/histogram1d_cpu.o $(OBJ_DIR)/hfused_kernel.o $(OBJ_DIR)/bncs_and_hist.o
-TUNNING_OBJS = $(OBJ_DIR)/tunning.o  $(OBJ_DIR)/hfused_kernel.o $(OBJ_DIR)/bncs_and_hist.o $(OBJ_DIR)/batch_norm_collect_statistics_gpu.o $(OBJ_DIR)/histogram1d_gpu.o
+MAIN_OBJS = $(OBJ_DIR)/main.o $(OBJ_DIR)/batch_norm_collect_statistics.o $(OBJ_DIR)/batch_norm_collect_statistics_cpu.o $(OBJ_DIR)/histogram1d.o $(OBJ_DIR)/histogram1d_cpu.o $(OBJ_DIR)/hfused_kernel.o $(OBJ_DIR)/bncs_and_hist.o
+TUNNING_OBJS = $(OBJ_DIR)/tunning.o  $(OBJ_DIR)/hfused_kernel.o $(OBJ_DIR)/bncs_and_hist.o $(OBJ_DIR)/batch_norm_collect_statistics.o $(OBJ_DIR)/histogram1d.o
 all: main tunning
 
 main : $(MAIN_OBJS)

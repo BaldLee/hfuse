@@ -8,7 +8,7 @@
  *   input size of bncs and hist
  * We will tune:
  *   girdDim, which is width in bncs
- * Best performance tunned: 8388608 262144 128
+ * Best performance tunned: 8388608 262144 128 (I forget the device, V100 maybe)
  */
 void tunning_hfuse(const int k1_total_elements, const int k2_total_elements,
                    const int grid_dim) {

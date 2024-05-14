@@ -1,7 +1,7 @@
 #include <cuda_runtime.h>
 
-#include "../include/batch_norm_collect_statistics_gpu.cuh"
-#include "../include/batch_norm_collect_statistics_gpu.h"
+#include "../include/batch_norm_collect_statistics.cuh"
+#include "../include/batch_norm_collect_statistics.h"
 #include "../include/from_pytorch.cuh"
 
 /* This kernel comes from pytorch/aten/src/ATen/native/cuda/Normalization.cuh
@@ -92,7 +92,7 @@ __global__ void batch_norm_collect_statistics_kernel(
     }
 }
 
-void batch_norm_collect_statistics_gpu(const float* h_input, int height,
+void batch_norm_collect_statistics(const float* h_input, int height,
                                        int width, int depth, float epsilon,
                                        float* h_mean,
                                        float* h_transformed_var) {
@@ -126,7 +126,7 @@ void batch_norm_collect_statistics_gpu(const float* h_input, int height,
     cudaFree(d_transformed_var);
 }
 
-float benchmark_batch_norm_collect_statistics_gpu(
+float benchmark_batch_norm_collect_statistics(
     const float* h_input, int height, int width, int depth, float epsilon,
     float* h_mean, float* h_transformed_var, const int loop) {
     // Allocate memory on device

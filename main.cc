@@ -2,12 +2,12 @@
 #include <stdlib.h>
 #include <time.h>
 
+#include "include/batch_norm_collect_statistics.h"
 #include "include/batch_norm_collect_statistics_cpu.h"
-#include "include/batch_norm_collect_statistics_gpu.h"
 #include "include/bncs_and_hist.h"
 #include "include/hfused.h"
+#include "include/histogram1d.h"
 #include "include/histogram1d_cpu.h"
-#include "include/histogram1d_gpu.h"
 
 // #define PRINT_RES 1
 
@@ -52,8 +52,8 @@ void test_batch_norm_collect_statistics() {
 #endif
 
     // Test for gpu
-    batch_norm_collect_statistics_gpu(h_input, height, width, depth, epsilon,
-                                      h_mean, h_transformed_var);
+    batch_norm_collect_statistics(h_input, height, width, depth, epsilon,
+                                  h_mean, h_transformed_var);
 
 #ifdef PRINT_RES
     // Print results
@@ -102,7 +102,7 @@ void test_histogram1d() {
 #endif
 
     // Test for gpu
-    histogram1D_gpu(h_a, h_b, nbins, minvalue, maxvalue, total_elements);
+    histogram1D(h_a, h_b, nbins, minvalue, maxvalue, total_elements);
 
 #ifdef PRINT_RES
     // Print results

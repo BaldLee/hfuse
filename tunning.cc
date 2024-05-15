@@ -2,7 +2,7 @@
 #include <time.h>
 
 #include "include/bncs_and_hist.h"
-#include "include/hfused.h"
+#include "include/hfused_kernel.h"
 
 /* We will fix:
  *   input size of bncs and hist
@@ -56,8 +56,8 @@ void tunning_hfuse(const int k1_total_elements, const int k2_total_elements,
  * We will tune:
  *   girdDim, which is width in bncs
  */
-void tunning_bncs_and_hist(const int k1_total_elements, const int k2_total_elements,
-                   const int grid_dim) {
+void tunning_bncs_and_hist(const int k1_total_elements,
+                           const int k2_total_elements, const int grid_dim) {
     srand(time(NULL));
 
     // Init for batch_norm_collect_statistics
@@ -86,8 +86,9 @@ void tunning_bncs_and_hist(const int k1_total_elements, const int k2_total_eleme
     float* h_mean = (float*)malloc(width * sizeof(float));
     float* h_transformed_var = (float*)malloc(width * sizeof(float));
 
-    bncs_and_hist(h_input, height, width, depth, epsilon, h_mean, h_transformed_var,
-           h_a, h_b, nbins, minvalue, maxvalue, k2_total_elements);
+    bncs_and_hist(h_input, height, width, depth, epsilon, h_mean,
+                  h_transformed_var, h_a, h_b, nbins, minvalue, maxvalue,
+                  k2_total_elements);
 
     free(h_input);
     free(h_mean);

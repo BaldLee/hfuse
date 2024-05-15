@@ -5,7 +5,7 @@
 #include "include/batch_norm_collect_statistics.h"
 #include "include/batch_norm_collect_statistics_cpu.h"
 #include "include/bncs_and_hist.h"
-#include "include/hfused.h"
+#include "include/hfused_kernel.h"
 #include "include/histogram1d.h"
 #include "include/histogram1d_cpu.h"
 

@@ -3,7 +3,7 @@
 #include <time.h>
 
 #include "include/gemm_cpu.h"
-#include "include/gemm_cublas.cuh"
+#include "include/gemm_cublas.h"
 
 void print_matrix(const float *matrix, const int M, const int N) {
     for (int m = 0; m < M; m++) {
@@ -36,7 +36,7 @@ void print_matrix_json(const float *matrix, const int M, const int N,
     fprintf(fout, "]\n");
 }
 
-int main() {
+void gemm_accu_test() {
     srand(time(NULL));
     float *a, *b, *c0, *c1;
     float *diff;
@@ -88,4 +88,43 @@ int main() {
     free(c0);
     free(c1);
     free(diff);
+}
+
+void bench_gemm() {
+    srand(time(NULL));
+    float *a, *b, *c0, *c1;
+    float *diff;
+    const int M = 2048, N = 2048, K = 2048;
+    a = (float *)malloc(M * K * sizeof(float));
+    b = (float *)malloc(K * N * sizeof(float));
+    c0 = (float *)malloc(M * N * sizeof(float));
+    c1 = (float *)malloc(M * N * sizeof(float));
+    diff = (float *)malloc(M * N * sizeof(float));
+
+    // Initialize inputs
+    for (int i = 0; i < M * K; i++) {
+        a[i] = static_cast<float>(rand() - RAND_MAX / 2) /
+               static_cast<float>(RAND_MAX);
+    }
+    for (int i = 0; i < K * N; i++) {
+        b[i] = static_cast<float>(rand() - RAND_MAX / 2) /
+               static_cast<float>(RAND_MAX);
+    }
+    for (int i = 0; i < M * N; i++) {
+        c0[i] = 0.0;
+        c1[i] = 0.0;
+    }
+
+    // Benchmark
+    const int loop = 1000;
+    auto cublas_time = bench_gemm_cublas(a, b, c0, M, N, K, loop);
+
+    printf("cublas time: %.4fms\n", cublas_time);
+}
+
+int main() {
+#if 0
+    gemm_accu_test()
+#endif
+    bench_gemm();
 }

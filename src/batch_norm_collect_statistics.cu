@@ -1,8 +1,5 @@
-#include <cuda_runtime.h>
-
-#include "../include/batch_norm_collect_statistics.cuh"
 #include "../include/batch_norm_collect_statistics.h"
-#include "../include/from_pytorch.cuh"
+#include "../include/from_pytorch.h"
 
 /* This kernel comes from pytorch/aten/src/ATen/native/cuda/Normalization.cuh
  * (pytorch/pytorch commit d59f1da6)
@@ -92,10 +89,9 @@ __global__ void batch_norm_collect_statistics_kernel(
     }
 }
 
-void batch_norm_collect_statistics(const float* h_input, int height,
-                                       int width, int depth, float epsilon,
-                                       float* h_mean,
-                                       float* h_transformed_var) {
+void batch_norm_collect_statistics(const float* h_input, int height, int width,
+                                   int depth, float epsilon, float* h_mean,
+                                   float* h_transformed_var) {
     // Allocate memory on device
     float *d_input, *d_mean, *d_transformed_var;
     const int total_elements = height * width * depth;
@@ -126,9 +122,11 @@ void batch_norm_collect_statistics(const float* h_input, int height,
     cudaFree(d_transformed_var);
 }
 
-float benchmark_batch_norm_collect_statistics(
-    const float* h_input, int height, int width, int depth, float epsilon,
-    float* h_mean, float* h_transformed_var, const int loop) {
+float benchmark_batch_norm_collect_statistics(const float* h_input, int height,
+                                              int width, int depth,
+                                              float epsilon, float* h_mean,
+                                              float* h_transformed_var,
+                                              const int loop) {
     // Allocate memory on device
     float *d_input, *d_mean, *d_transformed_var;
     const int total_elements = height * width * depth;
@@ -174,6 +172,8 @@ float benchmark_batch_norm_collect_statistics(
     cudaFree(d_input);
     cudaFree(d_mean);
     cudaFree(d_transformed_var);
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
 
     return total / loop;
 }

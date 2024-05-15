@@ -1,5 +1,5 @@
-#include "../include/hfused.h"
-#include "../include/hfused_kernel.cuh"
+#include "../include/hfused_kernel.h"
+#include "../include/from_pytorch.h"
 
 // Refernce code from the paper
 #if 0
@@ -326,6 +326,8 @@ float benchmark_hfused(const float* k1_input, int height, int width, int depth,
     cudaFree(d_k1_out_transformed_var);
     cudaFree(d_k2_output);
     cudaFree(d_k2_input);
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
 
     return total / loop;
 }

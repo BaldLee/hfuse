@@ -1,4 +1,4 @@
-#include "../include/bncs_and_hist.cuh"
+#include "../include/bncs_and_hist.h"
 
 void bncs_and_hist(const float* h_input, int height, int width, int depth,
                    float epsilon, float* h_mean, float* h_transformed_var,
@@ -136,5 +136,7 @@ float benchmark_bncs_and_hist(const float* h_input, int height, int width,
     cudaFree(d_transformed_var);
     cudaFree(d_a);
     cudaFree(d_b);
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
     return total / loop;
 }

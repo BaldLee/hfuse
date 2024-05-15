@@ -1,6 +1,11 @@
 #ifndef __BNCS_AND_HIST_H__
 #define __BNCS_AND_HIST_H__
 
+#include <cuda_runtime.h>
+
+#include "batch_norm_collect_statistics.h"
+#include "histogram1d.h"
+
 void bncs_and_hist(const float* h_input, int height, int width, int depth,
                    float epsilon, float* h_mean, float* h_transformed_var,
                    float* h_a,       /* output */

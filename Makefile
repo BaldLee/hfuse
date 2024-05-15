@@ -26,14 +26,16 @@ tunning : $(TUNNING_OBJS)
 gemm_test : $(GEMM_TEST_OBJS)
 	$(NVCC) $(NVCC_FLAGS) $(GEMM_TEST_OBJS) -o $@.out $(CUDA_INC_DIR) $(CUDA_LIB_DIR) $(CUDA_LINK_LIBS)
 
-$(OBJ_DIR)/%.o : $(SRC_DIR)/%.cc $(INC_DIR)/%.h
-	$(CC) $(CC_FLAGS) -c $< -o $@
-
-$(OBJ_DIR)/%.o : $(SRC_DIR)/%.cu $(INC_DIR)/%.cuh
+$(OBJ_DIR)/%.o : $(SRC_DIR)/%.cc $(INC_DIR)/%.h | $(OBJ_DIR)
 	$(NVCC) $(NVCC_FLAGS) -c $< -o $@ $(NVCC_LIBS)
 
-$(OBJ_DIR)/%.o : %.cc
-	$(CC) $(CC_FLAGS) -c $< -o $@
+$(OBJ_DIR)/%.o : $(SRC_DIR)/%.cu $(INC_DIR)/%.h | $(OBJ_DIR)
+	$(NVCC) $(NVCC_FLAGS) -c $< -o $@ $(NVCC_LIBS)
 
+$(OBJ_DIR)/%.o : %.cc | $(OBJ_DIR)
+	$(NVCC) $(NVCC_FLAGS) -c $< -o $@ $(NVCC_LIBS)
+
+$(OBJ_DIR) : 
+	mkdir -p $(OBJ_DIR) 
 clean:
 	$(RM) bin/* *.o *.out

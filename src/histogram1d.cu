@@ -1,4 +1,3 @@
-#include "../include/histogram1d.cuh"
 #include "../include/histogram1d.h"
 
 /* This kernel comes from pytorch/aten/src/ATen/native/cuda/SummaryOps.cu
@@ -50,9 +49,9 @@ __global__ void histogram1D_kernel(float* a,       /* output */
 }
 
 void histogram1D(float* h_a,       /* output */
-                     const float* h_b, /* input */
-                     int nbins, float minvalue, float maxvalue,
-                     int total_elements) {
+                 const float* h_b, /* input */
+                 int nbins, float minvalue, float maxvalue,
+                 int total_elements) {
     size_t size = total_elements * sizeof(float);
 
     // Allocate memory
@@ -78,9 +77,9 @@ void histogram1D(float* h_a,       /* output */
 }
 
 float benchmark_histogram1D(float* h_a,       /* output */
-                                const float* h_b, /* input */
-                                int nbins, float minvalue, float maxvalue,
-                                int total_elements, const int loop) {
+                            const float* h_b, /* input */
+                            int nbins, float minvalue, float maxvalue,
+                            int total_elements, const int loop) {
     size_t size = total_elements * sizeof(float);
 
     // Allocate memory
@@ -123,6 +122,8 @@ float benchmark_histogram1D(float* h_a,       /* output */
 
     cudaFree(d_a);
     cudaFree(d_b);
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
 
     return total / loop;
 }

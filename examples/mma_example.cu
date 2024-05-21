@@ -161,15 +161,17 @@ __global__ void mmaNaiveKernel(const half *__restrict__ A,
          */
         uint32_t B_smem_lane_addr = __cvta_generic_to_shared(
             &B_smem[lane_id % 8][((lane_id / 8) % 2) * 8]);
+#if 0
         printf("lane_id: %lu, row: %lu, col: %lu, mem_addr: %u\n", lane_id,
                lane_id % 8, ((lane_id / 8) % 2) * 8, B_smem_lane_addr);
+#endif
         LDMATRIX_X2(RB[0], RB[1], B_smem_lane_addr);
 
         HMMA16816(RC[0], RC[1], RA[0], RA[1], RA[2], RA[3], RB[0], RB[1], RC[0],
                   RC[1]);
 
         __syncthreads();
-    }
+    }  // End of K_tiles loop
 
     ((uint32_t *)(&C_smem[lane_id / 4][0]) + lane_id % 4)[0] = RC[0];
     ((uint32_t *)(&C_smem[lane_id / 4 + 8][0]) + lane_id % 4)[0] = RC[1];

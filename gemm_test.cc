@@ -1,3 +1,5 @@
+#include "include/gemm.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -39,6 +41,8 @@ void print_matrix_json(const float *matrix, const int M, const int N,
 void gemm_accu_test() {
     srand(time(NULL));
     float *a, *b, *c0, *c1;
+    half *ha, *hb, *hc;
+    // TODO(baldlee) init ha hb and hc
     float *diff;
     const int M = 128, N = 128, K = 128;
     a = (float *)malloc(M * K * sizeof(float));
@@ -68,6 +72,8 @@ void gemm_accu_test() {
 
     gemm_cpu(a, b, c0, M, N, K);
     gemm_cublas(a, b, c1, M, N, K);
+    
+    gemm(ha, hb, hc, M, N, K);
 
     for (int i = 0; i < M * N; i++) {
         diff[i] = c0[i] - c1[i];
@@ -88,6 +94,9 @@ void gemm_accu_test() {
     free(c0);
     free(c1);
     free(diff);
+    free(ha);
+    free(hb);
+    free(hc);
 }
 
 void bench_gemm() {
@@ -125,6 +134,6 @@ void bench_gemm() {
 int main() {
 #if 0
     gemm_accu_test()
-#endif
     bench_gemm();
+#endif
 }

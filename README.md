@@ -21,6 +21,8 @@
 2. Tiling is hard, but I don't want to note them here.
 3. Kernels can be imporved by PTX. There are some details. Refer ptx doc for anything.
    1. `mma.sync.aligned`. The mma instrcution.
+      1. A simple example locates in `examples/mma_example.cu`.
    2. `cp.async.ca`. Copy data from global mem to shared mem asynchronously.
       1. A simple example locates in `examples/cp_async_example.cu`.
    3. `ldmatrix.sync.aligned`. Load matrices from shared mem for mma instruction. It is in warp level.
+      1. A simple example locates in `examples/ldmatrix.cu`.

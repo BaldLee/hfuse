@@ -34,21 +34,31 @@ void gemm_cublas(float* input_a, float* input_b, float* input_c, const int M,
     cudaMemcpyAsync(d_c, input_c, sizeof(float) * M * N, cudaMemcpyHostToDevice,
                     stream);
 
+    // /*
+    //  * Transposing problem in cuBLAS:
+    //  * All matrices are considered in column-major in cuBLAS.
+    //  * We want to do row-major gemm, so we need to do transpose.
+    //  * We can do transpose for A and B with cublas api: transa and transb,
+    //  * but transc is not offered.
+    //  * How to handle it:
+    //  * C = A * B => C^T = B^T * A^T
+    //  * What we want is C^T, so we can switch the order of A and B.
+    //  * And the A and B is row-major, they are A^T and B^T in cublas sight, so
+    //  * transa and transb are all CUBLAS_OP_N (no need for transposing).
+    //  * In one sentence: if we want do "C(row-major) = A(row-major) *
+    //  * B(row-major)", do "C = B * A" in cublas.
+    //  */
+    // cublasOperation_t transa = CUBLAS_OP_N;
+    // cublasOperation_t transb = CUBLAS_OP_N;
+    // cublasSgemm(cublasH, transa, transb, M, N, K, &alpha, d_b, ldb, d_a, lda,
+    //             &beta, d_c, ldc);
+
     /*
-     * Transposing problem in cuBLAS:
-     * All matrices are considered in column-major in cuBLAS.
-     * We want to do row-major gemm, so we need to do transpose.
-     * We can do transpose for A and B with cublas api: transa and transb,
-     * but transc is not offered.
-     * How to handle it:
-     * C = A * B => C^T = B^T * A^T
-     * What we want is C^T, so we can switch the order of A and B.
-     * And the A and B is row-major, they are A^T and B^T in cublas sight, so
-     * transa and transb are all CUBLAS_OP_N (no need for transposing).
-     * In one sentence: if we want do "C(row-major) = A(row-major) *
-     * B(row-major)", do "C = B * A" in cublas.
+     * Now Matrix a is row-major and matrix b is col-major
+     * We want C^T, and C^T = B^T * A^T => B * A^T (recall matrix b is
+     * col-major)
      */
-    cublasOperation_t transa = CUBLAS_OP_N;
+    cublasOperation_t transa = CUBLAS_OP_T;
     cublasOperation_t transb = CUBLAS_OP_N;
     cublasSgemm(cublasH, transa, transb, M, N, K, &alpha, d_b, ldb, d_a, lda,
                 &beta, d_c, ldc);

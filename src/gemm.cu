@@ -15,7 +15,7 @@
  * A: row-major, B: col-major
  */
 __global__ void gemm_kernel(const half* a, const half* b, /* input */
-                            const half* c,                /* output */
+                            half* c,                      /* output */
                             const int M, const int N, const int K) {
     __shared__ half A_smem[MMA_M * MMA_K];
     __shared__ half B_smem[MMA_N * MMA_K];

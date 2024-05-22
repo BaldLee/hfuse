@@ -1,7 +1,7 @@
 CUDA_ROOT_DIR = ${CUDA_HOME}
 
 NVCC = $(CUDA_ROOT_DIR)/bin/nvcc
-NVCC_FLAGS = -lineinfo
+NVCC_FLAGS = -lineinfo -arch=sm_80
 NVCC_LIBS = 
 
 CUDA_LIB_DIR = -L$(CUDA_ROOT_DIR)/lib64
@@ -14,7 +14,7 @@ INC_DIR = include
 
 MAIN_OBJS = $(OBJ_DIR)/main.o $(OBJ_DIR)/batch_norm_collect_statistics.o $(OBJ_DIR)/batch_norm_collect_statistics_cpu.o $(OBJ_DIR)/histogram1d.o $(OBJ_DIR)/histogram1d_cpu.o $(OBJ_DIR)/hfused_kernel.o $(OBJ_DIR)/bncs_and_hist.o
 TUNNING_OBJS = $(OBJ_DIR)/tunning.o  $(OBJ_DIR)/hfused_kernel.o $(OBJ_DIR)/bncs_and_hist.o $(OBJ_DIR)/batch_norm_collect_statistics.o $(OBJ_DIR)/histogram1d.o
-GEMM_TEST_OBJS = $(OBJ_DIR)/gemm_test.o $(OBJ_DIR)/gemm_cpu.o $(OBJ_DIR)/gemm_cublas.o
+GEMM_TEST_OBJS = $(OBJ_DIR)/gemm_test.o $(OBJ_DIR)/gemm_cpu.o $(OBJ_DIR)/gemm_cublas.o $(OBJ_DIR)/gemm.o
 all: main tunning gemm_test
 
 main : $(MAIN_OBJS)
